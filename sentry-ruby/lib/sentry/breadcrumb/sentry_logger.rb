@@ -16,6 +16,7 @@ module Sentry
       def add(*args, &block)
         super
         add_breadcrumb(*args, &block)
+        # capture_stdlib_log(*args, &block)
         nil
       end
 
@@ -59,6 +60,8 @@ module Sentry
         message = message.to_s.strip
 
         last_crumb = current_breadcrumbs.peek
+
+        puts "last_crumb: #{last_crumb}"
         # try to avoid dupes from logger broadcasts
         if last_crumb.nil? || last_crumb.message != message
           level = Sentry::Breadcrumb::SentryLogger::LEVELS.fetch(severity, nil)
@@ -70,6 +73,54 @@ module Sentry
           )
 
           Sentry.add_breadcrumb(crumb, hint: { severity: severity })
+        end
+      end
+
+      def capture_stdlib_log(severity, message = nil, progname = nil)
+        puts "you callled"
+        # this is because the nature of Ruby Logger class:
+        #
+        # when given 1 argument, the argument will become both message and progname
+        #
+        # ```
+        # logger.info("foo")
+        # # message == progname == "foo"
+        # ```
+        #
+        # and to specify progname with a different message,
+        # we need to pass the progname as the argument and pass the message as a proc
+        #
+        # ```
+        # logger.info("progname") { "the message" }
+        # ```
+        #
+        # so the condition below is to replicate the similar behavior
+        if message.nil?
+          if block_given?
+            message = yield
+          else
+            message = progname
+          end
+        end
+
+        return if ignored_logger?(progname) || message == ""
+
+        puts "severity: #{severity}"
+        puts "message: #{message}"
+        puts "progname: #{progname}"
+        # puts "logging logs: #{message}:"
+
+        case severity
+        when 0
+          Sentry.logger.debug(message)
+        when 1
+          Sentry.logger.info(message)
+        when 2
+          Sentry.logger.warn(message)
+        when 3
+          Sentry.logger.error(message)
+        when 4
+          Sentry.logger.fatal(message)
         end
       end
 

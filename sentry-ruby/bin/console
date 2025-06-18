@@ -4,6 +4,7 @@
 require "bundler/setup"
 require "debug"
 require "sentry-ruby"
+require "logger"
 
 # You can add fixtures and/or initialization code here to make experimenting
 # with your gem easier. You can also use a different console, if you like.
@@ -15,6 +16,41 @@ require "sentry-ruby"
 # Sentry.init do |config|
 #   config.dsn = 'https://2fb45f003d054a7ea47feb45898f7649@o447951.ingest.sentry.io/5434472'
 # end
+
+Sentry.init do |config|
+  config.dsn = '********'
+  config.traces_sample_rate = 1.0
+  # Add data like request headers and IP for users,
+  # see https://docs.sentry.io/platforms/ruby/data-management/data-collected/ for more info
+  config.send_default_pii = true
+  config.enable_logs = true
+  config.send_stdlib_logs = true
+end
+
+
+logger = Logger.new(STDOUT)
+logger.debug("ruby logger debug - - 9")
+logger.info("ruby logger info - - 9")
+logger.warn("ruby logger warn - - 9")
+logger.fatal("ruby logger fatal - - 9")
+logger.info("ruby logger infbin")
+logger.error("ruby logger error - - 9")
+logger.info ("initialize") { "Initializing..." }
+logger.info('send_stdlib_log') { "send_stdlib_log_enable_logs: Testing 789..." }
+# logger.fatal ("fatal_error") { "Argument 'foo' not given." }
+# begin
+#   1 / 0
+# rescue ZeroDivisionError => exception
+#   Sentry.capture_exception(exception)
+#   logger.fatal("an error occurred: #{exception}")
+# end
+
+
+
+
+# Sentry.logger.info("from playground bin")
+
+sleep 25
 
 require "irb"
 IRB.start(__FILE__)
